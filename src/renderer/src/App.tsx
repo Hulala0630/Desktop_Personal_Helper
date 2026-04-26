@@ -594,6 +594,9 @@ function App() {
                     <p className="mt-2 text-sm leading-6 text-ink/75">
                       输入一次后，Aster 会自动生成 `.env.local`，后续就不需要你手动配环境变量了。
                     </p>
+                    <p className="mt-2 text-sm leading-6 text-ink/65">
+                      配置完成后你就可以直接使用流式 AI 对话、AI 资讯摘要和后续的个性化助手能力。
+                    </p>
                     {apiKeyStatus.envPath ? (
                       <p className="mt-2 text-xs leading-5 text-ocean/80">保存位置：{apiKeyStatus.envPath}</p>
                     ) : null}

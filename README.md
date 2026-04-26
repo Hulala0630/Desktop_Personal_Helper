@@ -61,6 +61,31 @@ npm.cmd run dev
 
 ## Build the Windows client
 
+### Recommended for regular users
+
+Build the installer:
+
+```powershell
+npm.cmd run dist:installer
+```
+
+Output:
+
+```text
+release\Aster-Setup-0.1.0.exe
+```
+
+What users get with the installer:
+
+- a normal Windows install flow
+- a custom Aster app icon
+- a first-run API key setup card inside the app
+- automatic `.env.local` generation after the key is saved
+
+After installation, the first launch will ask the user for an API key and store it automatically.
+
+### Portable version
+
 Generate a portable Windows executable:
 
 ```powershell
@@ -75,26 +100,13 @@ release\Aster-0.1.0-portable.exe
 
 You can double-click the `.exe` directly without opening VS Code.
 
-Generate an installer version:
-
-```powershell
-npm.cmd run dist:installer
-```
-
-Installer output:
-
-```text
-release\Aster-Setup-0.1.0.exe
-```
-
-After installation, the first launch will ask the user for an API key and automatically create `.env.local` for them.
-
 ## How to use
 
 - Move the mouse over the pet to preview the panel
 - Click the pet to pin the panel open
 - Drag the pet to any place on the desktop
 - Right-click the pet to close the app
+- If no API key is detected, complete the built-in setup card first
 - Type a message to create reminders, save context, or ask simple questions
 - Click the microphone button to record offline voice input
 - Review AI news in the digest section

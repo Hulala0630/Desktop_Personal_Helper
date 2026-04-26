@@ -38,6 +38,9 @@ let aiService: ReturnType<typeof createAiService> | null = process.env.OPENAI_AP
 const windowMargin = 18;
 const compactBounds = { width: 156, height: 156 };
 const expandedBounds = { width: 520, height: 860 };
+const appIconPath = app.isPackaged
+  ? path.join(process.resourcesPath, 'build', 'icon.png')
+  : path.join(process.cwd(), 'build', 'icon.png');
 
 const getApiKeyEnvPath = () => {
   const portableDir = process.env.PORTABLE_EXECUTABLE_DIR;
@@ -207,6 +210,7 @@ const createPetWindow = async () => {
     skipTaskbar: true,
     hasShadow: false,
     title: 'Desktop Pet Agent',
+    icon: appIconPath,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
