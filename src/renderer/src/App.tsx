@@ -123,6 +123,8 @@ function App() {
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const closeTimerRef = useRef<number | null>(null);
+  const hoverOpenTimerRef = useRef<number | null>(null);
+  const suppressHoverUntilRef = useRef(0);
   const activeStreamMessageIdRef = useRef<string | null>(null);
   const dragStateRef = useRef<{
     startPointerX: number;
@@ -196,6 +198,9 @@ function App() {
 
     return () => {
       unsubscribe();
+      if (hoverOpenTimerRef.current) {
+        window.clearTimeout(hoverOpenTimerRef.current);
+      }
       if (closeTimerRef.current) {
         window.clearTimeout(closeTimerRef.current);
       }
@@ -216,6 +221,7 @@ function App() {
 
       if (!dragState.moved && (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4)) {
         dragState.moved = true;
+        suppressHoverUntilRef.current = Date.now() + 320;
       }
 
       void window.petApi.setWindowPosition(dragState.startWindowX + deltaX, dragState.startWindowY + deltaY);
@@ -241,7 +247,32 @@ function App() {
     }
   };
 
+  const clearHoverOpenTimer = () => {
+    if (hoverOpenTimerRef.current) {
+      window.clearTimeout(hoverOpenTimerRef.current);
+      hoverOpenTimerRef.current = null;
+    }
+  };
+
+  const scheduleHoverOpen = () => {
+    clearHoverOpenTimer();
+
+    if (Date.now() < suppressHoverUntilRef.current || dragStateRef.current) {
+      return;
+    }
+
+    hoverOpenTimerRef.current = window.setTimeout(() => {
+      hoverOpenTimerRef.current = null;
+      if (Date.now() < suppressHoverUntilRef.current || dragStateRef.current) {
+        return;
+      }
+
+      void openPanel();
+    }, 140);
+  };
+
   const openPanel = async (pin = false) => {
+    clearHoverOpenTimer();
     clearCloseTimer();
     if (pin) {
       setIsPinnedOpen(true);
@@ -252,6 +283,7 @@ function App() {
   };
 
   const closePanel = async (force = false) => {
+    clearHoverOpenTimer();
     clearCloseTimer();
     if (!force && isPinnedOpen) {
       return;
@@ -409,14 +441,27 @@ function App() {
         <button
           type="button"
           className="pet-trigger"
-          onMouseEnter={() => void openPanel()}
-          onMouseLeave={scheduleClosePanel}
+          onMouseEnter={scheduleHoverOpen}
+          onMouseLeave={() => {
+            clearHoverOpenTimer();
+            scheduleClosePanel();
+          }}
           onPointerDown={(event) => {
             if (event.button !== 0) {
               return;
             }
 
-            void window.petApi.getWindowBounds().then((bounds) => {
+            clearHoverOpenTimer();
+            clearCloseTimer();
+            suppressHoverUntilRef.current = Date.now() + 500;
+
+            void (async () => {
+              if (isPanelVisible && !isPinnedOpen) {
+                setIsPanelVisible(false);
+                await window.petApi.setExpanded(false);
+              }
+
+              const bounds = await window.petApi.getWindowBounds();
               dragStateRef.current = {
                 startPointerX: event.screenX,
                 startPointerY: event.screenY,
@@ -424,11 +469,12 @@ function App() {
                 startWindowY: bounds.y,
                 moved: false
               };
-            });
+            })();
           }}
           onPointerUp={() => {
             const dragState = dragStateRef.current;
             if (dragState?.moved) {
+              suppressHoverUntilRef.current = Date.now() + 320;
               dragStateRef.current = null;
               return;
             }

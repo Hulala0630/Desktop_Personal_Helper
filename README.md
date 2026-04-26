@@ -1,68 +1,107 @@
-# Desktop Pet Agent
+# Aster
 
-## Current status
+Aster is a vibe-coded desktop assistant built with Electron, React, and TypeScript.
 
-This is a desktop client prototype built with Electron, React, and TypeScript.
+It lives on the desktop as a small pet, accepts text and offline voice input, keeps local reminders, and fetches fresh AI news from provider and engineering blogs.
 
-What works now:
+## What it does
 
-- desktop window shell
-- pet-style UI
-- hover or click to reveal the full menu
-- text input area
-- voice-to-text entry point when Chromium speech recognition is available
-- local SQLite memory and reminder persistence
-- reminder actions: complete, delete, snooze 10 minutes
-- desktop reminder notifications
+- Desktop pet style client, not a browser tab
+- Hover or click to open the assistant panel
+- Freely draggable pet window
+- Right-click pet to quit the app
+- Local reminder storage and desktop notifications
+- Local memory used as agent context
+- Streaming AI replies through the OpenAI API
+- Offline voice transcription routed into the chat input box
+- AI news digest from model providers and technical AI sources
 
-What is not wired yet:
+## Tech stack
 
-- real LLM API calls
-- Windows calendar integration
+- Electron
+- React
+- TypeScript
+- better-sqlite3
+- OpenAI Responses API
+- whisper-tiny based offline transcription
 
-## How to open
+## Quick start
 
-From the project root run:
+### 1. Clone the project
+
+```powershell
+git clone <your-repo-url>
+cd desktop_pet_agent
+```
+
+### 2. Install dependencies
+
+```powershell
+npm.cmd install
+```
+
+### 3. Add your API key
+
+Create `.env.local` in the project root:
+
+```env
+OPENAI_API_KEY=your_real_key_here
+```
+
+For the packaged portable client, you can also place `.env.local` next to the `.exe`.
+
+### 4. Run in development
 
 ```powershell
 npm.cmd run dev
 ```
 
-## Windows client
+## Build the Windows client
 
-You can now build a standalone Windows executable:
+Generate a portable Windows executable:
 
 ```powershell
 npm.cmd run dist:win
 ```
 
-After packaging finishes, the client will be created here:
+Output:
 
 ```text
 release\Aster-0.1.0-portable.exe
 ```
 
-You can double-click that file directly without opening VSCode.
+You can double-click the `.exe` directly without opening VS Code.
 
-If you want AI chat in the packaged client, place a `.env.local` file next to the `.exe` and add:
+## How to use
 
-```env
-OPENAI_API_KEY=your_real_key_here
-```
+- Move the mouse over the pet to preview the panel
+- Click the pet to pin the panel open
+- Drag the pet to any place on the desktop
+- Right-click the pet to close the app
+- Type a message to create reminders, save context, or ask simple questions
+- Click the microphone button to record offline voice input
+- Review AI news in the digest section
 
-When the Electron window appears:
+## Local data
 
-- you will first see the compact desktop pet
-- move your mouse over it to reveal the panel
-- or click the pet once to pin the menu open
-- click again or use the `折叠` button to collapse it
+The app stores reminders, chat logs, and memory in a local SQLite database under the Electron user data directory on your machine.
 
-## API key
+That local data is not included in this repository.
 
-Create a `.env.local` file in the project root and add:
+## Repository notes
 
-```env
-OPENAI_API_KEY=your_real_key_here
-```
+The following are intentionally not committed:
 
-In the next step, this key should be read from the Electron main process or a local backend layer instead of exposing it in the renderer UI.
+- `.env.local`
+- `node_modules`
+- build output such as `out` and `release`
+- local user data and SQLite files
+
+## Current focus
+
+Aster is designed first as a lightweight desktop companion for:
+
+- reminder management
+- personal context capture
+- simple AI chat
+- fresh AI updates for builders and technical users
