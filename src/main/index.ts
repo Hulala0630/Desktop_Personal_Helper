@@ -188,6 +188,8 @@ const createPetWindow = async () => {
   });
 
   petWindow.setMenuBarVisibility(false);
+  petWindow.on('restore', () => petWindow?.setSkipTaskbar(true));
+  petWindow.on('show', () => petWindow?.setSkipTaskbar(true));
 
   if (process.env['ELECTRON_RENDERER_URL']) {
     await petWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
@@ -202,12 +204,20 @@ app.whenReady().then(() => {
     callback(permission === 'media');
   });
 
-  ipcMain.handle('pet:minimize', () => petWindow?.minimize());
+  ipcMain.handle('pet:minimize', () => {
+    if (!petWindow) {
+      return;
+    }
+
+    petWindow.setSkipTaskbar(false);
+    petWindow.minimize();
+  });
   ipcMain.handle('pet:openExternal', (_event, url: string) => shell.openExternal(url));
   ipcMain.handle('pet:setExpanded', (_event, expanded: boolean) => setPetWindowExpanded(expanded));
   ipcMain.handle('pet:getWindowBounds', () => getPetWindowBounds());
   ipcMain.handle('pet:setWindowPosition', (_event, x: number, y: number) => setPetWindowPosition(x, y));
   ipcMain.handle('pet:showContextMenu', () => showPetContextMenu());
+  ipcMain.handle('pet:clearChat', () => assistantService.clearChatLogs());
   ipcMain.handle('pet:transcribeAudio', async (_event, samples: ArrayBuffer) => {
     const pcmSamples = new Float32Array(samples);
     return transcribePcm(pcmSamples);

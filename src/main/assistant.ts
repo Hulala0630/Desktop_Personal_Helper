@@ -203,6 +203,11 @@ export const createAssistantService = (db: LocalDatabase) => {
     digestItems: getDigestItems()
   });
 
+  const clearChatLogs = () => {
+    db.prepare(`DELETE FROM chat_logs`).run();
+    return getDashboardState();
+  };
+
   const saveChatMessage = (role: 'user' | 'assistant', content: string, source: InputSource | 'system') => {
     db.prepare(
       `
@@ -392,6 +397,7 @@ export const createAssistantService = (db: LocalDatabase) => {
 
   return {
     buildContext,
+    clearChatLogs,
     finalizeAssistantReply,
     flushDueReminders,
     getDashboardState,

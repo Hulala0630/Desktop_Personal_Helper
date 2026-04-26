@@ -54,6 +54,7 @@ declare global {
       getWindowBounds: () => Promise<{ x: number; y: number; width: number; height: number }>;
       setWindowPosition: (x: number, y: number) => Promise<void>;
       showContextMenu: () => Promise<void>;
+      clearChat: () => Promise<DashboardState>;
       transcribeAudio: (samples: ArrayBuffer) => Promise<string>;
       getDashboard: () => Promise<DashboardState>;
       refreshDigest: () => Promise<DashboardState>;
@@ -341,6 +342,13 @@ function App() {
     setDashboard(await window.petApi.reminderAction(reminderId, action));
   };
 
+  const clearChatPanel = async () => {
+    activeStreamMessageIdRef.current = null;
+    setIsSubmitting(false);
+    setDraft('');
+    setDashboard(await window.petApi.clearChat());
+  };
+
   const stopRecording = async () => {
     const recorder = mediaRecorderRef.current;
     if (!recorder) {
@@ -544,6 +552,12 @@ function App() {
 
           <div className="panel-scroll">
             <section className="panel-block bubble-panel">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-ember">当前对话</p>
+                <button className="tiny-button" type="button" onClick={() => void clearChatPanel()}>
+                  刷新对话框
+                </button>
+              </div>
               <div className="chat-stack bubbles inner-scroll">
                 {dashboard.chatLogs.map((message) => (
                   <div key={message.id} className={`bubble-row ${message.role === 'user' ? 'user' : 'assistant'}`}>
