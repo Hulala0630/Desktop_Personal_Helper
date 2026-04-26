@@ -39,6 +39,11 @@ type DashboardState = {
   digestItems: DigestItem[];
 };
 
+type ApiKeyStatus = {
+  hasApiKey: boolean;
+  envPath: string;
+};
+
 type StreamEvent =
   | { type: 'start'; streamId: string }
   | { type: 'delta'; streamId: string; delta: string }
@@ -55,6 +60,8 @@ declare global {
       setWindowPosition: (x: number, y: number) => Promise<void>;
       showContextMenu: () => Promise<void>;
       clearChat: () => Promise<DashboardState>;
+      getApiKeyStatus: () => Promise<ApiKeyStatus>;
+      saveApiKey: (apiKey: string) => Promise<ApiKeyStatus>;
       transcribeAudio: (samples: ArrayBuffer) => Promise<string>;
       getDashboard: () => Promise<DashboardState>;
       refreshDigest: () => Promise<DashboardState>;
@@ -112,6 +119,10 @@ const formatReminderClock = (value: string) =>
 function App() {
   const [dashboard, setDashboard] = useState<DashboardState>(emptyState);
   const [draft, setDraft] = useState('');
+  const [apiKeyDraft, setApiKeyDraft] = useState('');
+  const [apiKeyStatus, setApiKeyStatus] = useState<ApiKeyStatus>({ hasApiKey: false, envPath: '' });
+  const [apiKeyError, setApiKeyError] = useState('');
+  const [isSavingApiKey, setIsSavingApiKey] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPinnedOpen, setIsPinnedOpen] = useState(false);
   const [isPanelVisible, setIsPanelVisible] = useState(false);
@@ -137,6 +148,7 @@ function App() {
 
   useEffect(() => {
     void window.petApi.getDashboard().then(setDashboard);
+    void window.petApi.getApiKeyStatus().then(setApiKeyStatus);
 
     const unsubscribe = window.petApi.onAssistantStream((payload) => {
       if (payload.type === 'start') {
@@ -349,6 +361,29 @@ function App() {
     setDashboard(await window.petApi.clearChat());
   };
 
+  const saveApiKeyFromPanel = async () => {
+    const normalized = apiKeyDraft.trim();
+    if (!normalized) {
+      setApiKeyError('请输入有效的 API key。');
+      return;
+    }
+
+    setIsSavingApiKey(true);
+    setApiKeyError('');
+
+    try {
+      const nextStatus = await window.petApi.saveApiKey(normalized);
+      setApiKeyStatus(nextStatus);
+      setApiKeyDraft('');
+      setVoiceStatus('API key 已保存，AI 对话现在可以直接使用。');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setApiKeyError(message);
+    } finally {
+      setIsSavingApiKey(false);
+    }
+  };
+
   const stopRecording = async () => {
     const recorder = mediaRecorderRef.current;
     if (!recorder) {
@@ -551,6 +586,39 @@ function App() {
           </div>
 
           <div className="panel-scroll">
+            {!apiKeyStatus.hasApiKey ? (
+              <section className="panel-block bubble-panel setup-card">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-ember">首次配置 API key</p>
+                    <p className="mt-2 text-sm leading-6 text-ink/75">
+                      输入一次后，Aster 会自动生成 `.env.local`，后续就不需要你手动配环境变量了。
+                    </p>
+                    {apiKeyStatus.envPath ? (
+                      <p className="mt-2 text-xs leading-5 text-ocean/80">保存位置：{apiKeyStatus.envPath}</p>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-col gap-3">
+                  <input
+                    className="setup-input"
+                    type="password"
+                    value={apiKeyDraft}
+                    onChange={(event) => setApiKeyDraft(event.target.value)}
+                    placeholder="粘贴你的 OpenAI API key"
+                  />
+                  <div className="flex items-center gap-3">
+                    <button className="primary-button" type="button" onClick={() => void saveApiKeyFromPanel()} disabled={isSavingApiKey}>
+                      {isSavingApiKey ? '保存中...' : '保存并启用 AI'}
+                    </button>
+                    <span className="text-xs text-ink/65">未配置 key 时，本地提醒和记忆功能仍可使用。</span>
+                  </div>
+                  {apiKeyError ? <p className="text-sm text-rose-700">{apiKeyError}</p> : null}
+                </div>
+              </section>
+            ) : null}
+
             <section className="panel-block bubble-panel">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-ember">当前对话</p>

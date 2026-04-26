@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, Menu, Notification, screen, session, shell } from 'electron';
+import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import dotenv from 'dotenv';
 import { createAssistantService, ReminderAction } from './assistant';
@@ -12,6 +13,7 @@ const loadEnvFile = () => {
   const candidates = [
     path.join(process.cwd(), '.env.local'),
     portableDir ? path.join(portableDir, '.env.local') : null,
+    path.join(app.getPath('userData'), '.env.local'),
     path.join(path.dirname(process.execPath), '.env.local'),
     path.join(process.resourcesPath, '.env.local')
   ].filter((candidate): candidate is string => Boolean(candidate));
@@ -30,10 +32,35 @@ let petWindowState: { compactX: number; compactY: number; expanded: boolean } | 
 
 const database = getDatabase();
 const assistantService = createAssistantService(database);
-const aiService = process.env.OPENAI_API_KEY ? createAiService(process.env.OPENAI_API_KEY) : null;
+let aiService: ReturnType<typeof createAiService> | null = process.env.OPENAI_API_KEY
+  ? createAiService(process.env.OPENAI_API_KEY)
+  : null;
 const windowMargin = 18;
 const compactBounds = { width: 156, height: 156 };
 const expandedBounds = { width: 520, height: 860 };
+
+const getApiKeyEnvPath = () => {
+  const portableDir = process.env.PORTABLE_EXECUTABLE_DIR;
+  return portableDir ? path.join(portableDir, '.env.local') : path.join(app.getPath('userData'), '.env.local');
+};
+
+const getApiKeyStatus = () => ({
+  hasApiKey: Boolean(process.env.OPENAI_API_KEY?.trim()),
+  envPath: getApiKeyEnvPath()
+});
+
+const saveApiKey = async (apiKey: string) => {
+  const normalized = apiKey.trim();
+  if (!normalized) {
+    throw new Error('API key 不能为空。');
+  }
+
+  const envPath = getApiKeyEnvPath();
+  await writeFile(envPath, `OPENAI_API_KEY=${normalized}\n`, 'utf8');
+  process.env.OPENAI_API_KEY = normalized;
+  aiService = createAiService(normalized);
+  return getApiKeyStatus();
+};
 
 const getAnchoredBounds = (width: number, height: number) => {
   const display = screen.getPrimaryDisplay();
@@ -218,6 +245,8 @@ app.whenReady().then(() => {
   ipcMain.handle('pet:setWindowPosition', (_event, x: number, y: number) => setPetWindowPosition(x, y));
   ipcMain.handle('pet:showContextMenu', () => showPetContextMenu());
   ipcMain.handle('pet:clearChat', () => assistantService.clearChatLogs());
+  ipcMain.handle('pet:getApiKeyStatus', () => getApiKeyStatus());
+  ipcMain.handle('pet:saveApiKey', (_event, apiKey: string) => saveApiKey(apiKey));
   ipcMain.handle('pet:transcribeAudio', async (_event, samples: ArrayBuffer) => {
     const pcmSamples = new Float32Array(samples);
     return transcribePcm(pcmSamples);

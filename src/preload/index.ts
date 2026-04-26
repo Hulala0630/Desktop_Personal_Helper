@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld('petApi', {
   setWindowPosition: (x: number, y: number) => ipcRenderer.invoke('pet:setWindowPosition', x, y),
   showContextMenu: () => ipcRenderer.invoke('pet:showContextMenu'),
   clearChat: () => ipcRenderer.invoke('pet:clearChat'),
+  getApiKeyStatus: () => ipcRenderer.invoke('pet:getApiKeyStatus'),
+  saveApiKey: (apiKey: string) => ipcRenderer.invoke('pet:saveApiKey', apiKey),
   transcribeAudio: (samples: ArrayBuffer) => ipcRenderer.invoke('pet:transcribeAudio', samples),
   getDashboard: () => ipcRenderer.invoke('pet:getDashboard'),
   refreshDigest: () => ipcRenderer.invoke('pet:refreshDigest'),

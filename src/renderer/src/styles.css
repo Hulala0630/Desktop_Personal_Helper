@@ -158,6 +158,16 @@ button {
     max-height: 240px;
   }
 
+  .setup-card {
+    border: 1px solid rgba(232, 120, 47, 0.14);
+    background: linear-gradient(135deg, rgba(255, 249, 239, 0.98), rgba(255, 255, 255, 0.96));
+  }
+
+  .setup-input {
+    @apply w-full rounded-[20px] border bg-white px-4 py-3 text-sm leading-6 text-ink outline-none transition;
+    border-color: rgba(20, 19, 15, 0.12);
+  }
+
   .action-pill {
     @apply block w-full rounded-full border bg-white px-4 py-3 text-left text-sm text-ink transition hover:-translate-y-0.5 hover:bg-[#fdf7ed];
     border-color: rgba(20, 19, 15, 0.12);

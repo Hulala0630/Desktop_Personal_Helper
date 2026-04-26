@@ -42,13 +42,16 @@ npm.cmd install
 
 ### 3. Add your API key
 
-Create `.env.local` in the project root:
+You now have two ways to do this:
+
+- Development: create `.env.local` in the project root
+- Packaged client: launch the app and paste the key into the built-in first-run setup card
+
+Example:
 
 ```env
 OPENAI_API_KEY=your_real_key_here
 ```
-
-For the packaged portable client, you can also place `.env.local` next to the `.exe`.
 
 ### 4. Run in development
 
@@ -71,6 +74,20 @@ release\Aster-0.1.0-portable.exe
 ```
 
 You can double-click the `.exe` directly without opening VS Code.
+
+Generate an installer version:
+
+```powershell
+npm.cmd run dist:installer
+```
+
+Installer output:
+
+```text
+release\Aster-Setup-0.1.0.exe
+```
+
+After installation, the first launch will ask the user for an API key and automatically create `.env.local` for them.
 
 ## How to use
 
